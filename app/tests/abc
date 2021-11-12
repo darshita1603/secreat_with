@@ -1,0 +1,100 @@
+    # token=request.META.get('HTTP_AUTHORIZATION')
+    # print(token)
+
+
+    # class ResetPasswordRequestToken(GenericAPIView):
+#     """
+#     An Api View which provides a method to request a password reset token based on an e-mail address
+#     Sends a signal reset_password_token_created when a reset token was created
+#     """
+#     throttle_classes = ()
+#     permission_classes = ()
+#     serializer_class = EmailSerializer
+
+#     def post(self, request, *args, **kwargs):
+#         serializer = self.serializer_class(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         email = serializer.validated_data['email']
+
+#         # before we continue, delete all existing expired tokens
+#         password_reset_token_validation_time = get_password_reset_token_expiry_time()
+
+#         # datetime.now minus expiry hours
+#         now_minus_expiry_time = timezone.now() - timedelta(hours=password_reset_token_validation_time)
+
+#         # delete all tokens where created_at < now - 24 hours
+#         clear_expired(now_minus_expiry_time)
+
+#         # find a user by email address (case insensitive search)
+#         users = User.objects.filter(**{'{}__iexact'.format(get_password_reset_lookup_field()): email})
+
+#         active_user_found = False
+
+#         # iterate over all users and check if there is any user that is active
+#         # also check whether the password can be changed (is useable), as there could be users that are not allowed
+#         # to change their password (e.g., LDAP user)
+#         for user in users:
+#             if user.eligible_for_reset():
+#                 active_user_found = True
+#                 break
+
+#         # No active user found, raise a validation error
+#         # but not if DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE == True
+#         if not active_user_found and not getattr(settings, 'DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE', False):
+#             raise exceptions.ValidationError({
+#                 'email': [_(
+#                     "We couldn't find an account associated with that email. Please try a different e-mail address.")],
+#             })
+
+#         # last but not least: iterate over all users that are active and can change their password
+#         # and create a Reset Password Token and send a signal with the created token
+#         for user in users:
+#             if user.eligible_for_reset():
+#                 # define the token as none for now
+#                 token = None
+
+#                 # check if the user already has a token
+#                 if user.password_reset_tokens.all().count() > 0:
+#                     # yes, already has a token, re-use this token
+#                     token = user.password_reset_tokens.all()[0]
+#                 else:
+#                     # no token exists, generate a new token
+#                     token = ResetPasswordToken.objects.create(
+#                         user=user,
+#                         user_agent=request.META.get(HTTP_USER_AGENT_HEADER, ''),
+#                         ip_address=request.META.get(HTTP_IP_ADDRESS_HEADER, ''),
+#                     )
+#                 # send a signal that the password token was created
+#                 # let whoever receives this signal handle sending the email for the password reset
+#                 reset_password_token_created.send(sender=self.__class__, instance=self, reset_password_token=token)
+#         # done
+#         return Response({'status': 'OK'})
+
+# class SendFormEmail(generics.GenericAPIView):
+#     print("iiiiii")
+#     serializer_class = EmailSerializer
+
+#     def post(self, request, *args, **kwargs):
+#         print("jjjjjjjjjjjjjjj")
+#         serializer = self.get_serializer(data=request.data)
+#         print(serializer,"ooooooooooooooooooooooo")
+#         serializer.is_valid(raise_exception=True)
+#         print("00000000000000000000000000000000000000000000000000000000000000000000000000000")
+#         employee=serializer.save()
+#         print(employee,"kkkkihhhhhhhhhhhhhhhhhhhhhh")
+
+#         password_data=serializer.data
+#         uidb64=urlsafe_base64_encode(smart_bytes(password_data['id']))
+#         token=default_token_generator.make_token(user=employee)
+#         email_subject="Activate your EmployeeDev Account"
+#         email_body='http://127.0.0.1:8080/?uidb='+uidb64+'&token='+token
+
+#         print('\n\nbefore\n\n')
+#         send_mail(email_subject, email_body, settings.EMAIL_HOST_USER, [password_data['email'],])
+#         print('\n\nafter\n\n')
+#         user=serializer.validated_data['user']
+#         token,created=Token.objects.get_or_create(user=user)
+#         return Response({
+#             "employee": EmailSerializer(employee, context=self.get_serializer_context()).data,
+#             "token": token.key
+#         })
